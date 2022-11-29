@@ -3,6 +3,7 @@ const cors = require('cors');
 
 const app = express();
 const contactController = require('./controllers/contact.controller');
+const ApiError = require('./api-error');
 
 app.use(cors());
 app.use(express.json());
@@ -23,5 +24,21 @@ app.route('/api/contacts/:id')
     .get(contactController.findOne)
     .put(contactController.update)
     .delete(contactController.delete);
+
+// Handle 404 response.
+app.use((req, res, next) => {
+    // Handler for unknown route.
+    // Call next() to pass to the error handling middleware.
+    return next(new ApiError(404, 'Resource not found'));
+});
+
+app.use((err, req, res, next) => {
+    // The centralized error handling middleware.
+    // In any route handler, calling next(error)
+    // will pass to this error handling middleware.
+    return res.status(err.statusCode || 500).json({
+        message: err.message || 'Internal Server Error',
+    });
+});
 
 module.exports = app;
